@@ -50,6 +50,8 @@ jobs:
           BRANCH_NAME="${{ steps.branch_exists.outputs.branch_name }}"
           git fetch
           git checkout "$BRANCH_NAME"
+          git config --global user.email "hiroya.yabiku@prtimes.co.jp"
+          git config --global user.name "hiroya.yabiku"
           git merge origin/develop --no-edit --allow-unrelated-histories
           git push origin "$BRANCH_NAME"
           echo "::set-output name=branch_name::$BRANCH_NAME"
