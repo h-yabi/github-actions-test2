@@ -1,11 +1,11 @@
 name: create branch & pull request
 
 on:
-  push:
+  pull_request:
     branches: [develop]
 
 jobs:
-  build:
+  create-branch:
     permissions:
       actions: write
       checks: write
@@ -41,7 +41,7 @@ jobs:
             echo "::set-output name=branch_name::$BRANCH_NAME"
           fi
 
-      - name: Create Branch
+      - name: Create Branch and Push
         id: create_branch
         if: steps.branch_exists.outputs.branch_name != ''
         env:
@@ -51,3 +51,24 @@ jobs:
           git checkout -b "$BRANCH_NAME"
           git push origin "$BRANCH_NAME"
           echo "::set-output name=branch_name::$BRANCH_NAME"
+
+      # プルリクエストのbaseブランチを変更する
+      - name: Run GitHub API
+        run: |
+          curl -X PATCH \
+                -H "Accept: application/vnd.github+json" \
+                -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+                https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }} \
+                -d "{ \"base\": \"$BRANCH_NAME\" }" \
+
+  # merge:
+  #   name: merge
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Run GitHub API
+  #       run: |
+  #         curl -X PATCH \
+  #               -H "Accept: application/vnd.github+json" \
+  #               -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+  #               https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }} \
+  #               -d "{ \"base\": \"$message\" }" \
