@@ -59,11 +59,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git remote update
-          git checkout develop
-          git pull
-          git checkout ${{ steps.branch_exists.outputs.branch_name }}
-          git rebase develop
+          BRANCH_NAME="${{ steps.branch_exists.outputs.branch_name }}"
+          git checkout "$BRANCH_NAME"
+          git rebase origin develop
           git push -f origin ${{ steps.branch_exists.outputs.branch_name }}
 
       # プルリクエストのbaseブランチを変更する
