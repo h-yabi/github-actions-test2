@@ -1,59 +1,71 @@
 name: create branch & pull request
 
 on:
-  push:
+  pull_request:
     branches: [develop]
 
 jobs:
-  build:
+  merge-dependabot-PR:
     permissions:
       actions: write
       checks: write
       contents: write
-      deployments: write
-      issues: write
-      packages: write
+      # deployments: write
+      # issues: write
+      # packages: write
       pull-requests: write
-      repository-projects: write
-      security-events: write
-      statuses: write
+      # repository-projects: write
+      # security-events: write
+      # statuses: write
     runs-on: ubuntu-latest
 
     steps:
-      # hub コマンドをインストールする
-      # - name: install hub
-      #   uses: geertvdc/setup-hub@v1.0.0
-
       # develop ブランチをチェックアウトする
       - name: checkout develop
         uses: actions/checkout@v2
         with:
           ref: develop
 
-      # ブランチを作成する
-      - name: Create Branch
-        id: create_branch
+      # ブランチが存在しない場合は作成・プッシュする
+      - name: Check if branch exists
+        id: branch_exists
         env:
-          TZ: 'Asia/Tokyo'
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          DATE=`date +"%Y%m%d"`
-          BRANCH_NAME="release_$DATE"
+          BRANCH_NAME="dependabot-$(TZ=Asia/Tokyo date +'%Y%m%d-%H%M%S')"
+          if git ls-remote --heads origin "$BRANCH_NAME" | grep -q "$BRANCH_NAME"; then
+            echo "Branch already exists"
+            echo "::set-output name=branch_name::"
+          else
+            echo "Branch does not exist"
+            echo "::set-output name=branch_name::$BRANCH_NAME"
+          fi
+
+      - name: Create Branch and Push
+        id: create_branch
+        if: steps.branch_exists.outputs.branch_name != ''
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH_NAME="${{ steps.branch_exists.outputs.branch_name }}"
           git checkout -b "$BRANCH_NAME"
           git push origin "$BRANCH_NAME"
-          echo ::set-output name=branch_name::$BRANCH_NAME
+          echo "::set-output name=branch_name::$BRANCH_NAME"
 
-      # プルリクを作成する
-      - name: 'Pull Request Thank You'
-        uses: GuySWatson/pr-thankyou-action@v1.2
-        with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          BRANCH_NAME: ${{ steps.create_branch.outputs.branch_name }}
+      # プルリクエストのbaseブランチを変更する
+      - name: Run GitHub API
+        run: |
+          BRANCH_NAME="${{ steps.branch_exists.outputs.branch_name }}"
+          curl -X PATCH \
+                -H "Accept: application/vnd.github+json" \
+                -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+                https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }} \
+                -d "{ \"base\": \"$BRANCH_NAME\" }" \
 
-      # - name: Create Pull Request
-      #   env:
-      #     REVIEWERS: 'rito328'
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #     BRANCH_NAME: ${{ steps.create_branch.outputs.branch_name }}
-      #   run: |
-      #     hub pull-request -m "Github Actions からプルリクを出す" -b master -h $BRANCH_NAME -l "PR:draft" -r "$REVIEWERS"
+      # マージする
+      - name: Enable auto-merge for Dependabot PRs
+        # if: ${{ steps.metadata.outputs.update-type == 'version-update:semver-patch' }}
+        run: gh pr merge --auto --merge "$PR_URL"
+        env:
+          PR_URL: ${{github.event.pull_request.html_url}}
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
