@@ -41,17 +41,6 @@ jobs:
             echo "::set-output name=branch_name::$BRANCH_NAME"
           fi
 
-      # ブランチが存在する場合は、最新のdevelopブランチをrebaseする
-      - name: Rebase latest develop branch
-        if: steps.branch_exists.outputs.branch_name == ${{ steps.branch_exists.outputs.branch_name }}
-        run: |
-          git remote update
-          git checkout develop
-          git pull
-          git checkout ${{ steps.branch_exists.outputs.branch_name }}
-          git rebase develop
-          git push -f origin ${{ steps.branch_exists.outputs.branch_name }}
-
       # ブランチが存在しない場合は、作成・プッシュする
       - name: Create Branch and Push
         id: create_branch
@@ -63,6 +52,17 @@ jobs:
           git checkout -b "$BRANCH_NAME"
           git push origin "$BRANCH_NAME"
           echo "::set-output name=branch_name::$BRANCH_NAME"
+
+      # ブランチが存在する場合は、最新のdevelopブランチをrebaseする
+      - name: Rebase latest develop branch
+        if: steps.branch_exists.outputs.branch_name != ''
+        run: |
+          git remote update
+          git checkout develop
+          git pull
+          git checkout ${{ steps.branch_exists.outputs.branch_name }}
+          git rebase develop
+          git push -f origin ${{ steps.branch_exists.outputs.branch_name }}
 
       # プルリクエストのbaseブランチを変更する
       - name: Run GitHub API
