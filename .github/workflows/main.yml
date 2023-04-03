@@ -26,13 +26,13 @@ jobs:
         with:
           ref: develop
 
-      # ブランチが存在しない場合は作成・プッシュする
+      # ブランチが存在するかしないか判定
       - name: Check if branch exists
         id: branch_exists
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          BRANCH_NAME="develop-$(TZ=Asia/Tokyo date +'%Y%m%d-%H%M%S')"
+          BRANCH_NAME="develop-$(TZ=Asia/Tokyo date +'%Y%m%d')"
           if git ls-remote --heads origin "$BRANCH_NAME" | grep -q "$BRANCH_NAME"; then
             echo "Branch already exists"
             echo "::set-output name=branch_name::"
@@ -41,6 +41,7 @@ jobs:
             echo "::set-output name=branch_name::$BRANCH_NAME"
           fi
 
+      # ブランチが存在しない場合は、作成・プッシュする
       - name: Create Branch and Push
         id: create_branch
         if: steps.branch_exists.outputs.branch_name != ''
@@ -51,6 +52,17 @@ jobs:
           git checkout -b "$BRANCH_NAME"
           git push origin "$BRANCH_NAME"
           echo "::set-output name=branch_name::$BRANCH_NAME"
+
+      # ブランチが存在する場合は、最新のdevelopブランチをrebaseする
+      - name: Rebase latest develop branch
+        if: steps.branch_exists.outputs.branch_name != ''
+        run: |
+          git remote update
+          git checkout develop
+          git pull
+          git checkout ${{ steps.branch_exists.outputs.branch_name }}
+          git rebase develop
+          git push -f origin ${{ steps.branch_exists.outputs.branch_name }}
 
       # プルリクエストのbaseブランチを変更する
       - name: Run GitHub API
