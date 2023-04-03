@@ -26,13 +26,13 @@ jobs:
         with:
           ref: develop
 
-      # ブランチが存在しない場合は作成する
+      # ブランチが存在しない場合は作成・プッシュする
       - name: Check if branch exists
         id: branch_exists
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          BRANCH_NAME="release_$(date +'%Y%m%d')_$(openssl rand -hex 4)"
+          BRANCH_NAME="release_$(date +'%Y%m%d')-$(openssl rand -hex 4)"
           if git ls-remote --heads origin "$BRANCH_NAME" | grep -q "$BRANCH_NAME"; then
             echo "Branch already exists"
             echo "::set-output name=branch_name::"
