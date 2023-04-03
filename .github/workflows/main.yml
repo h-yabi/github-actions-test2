@@ -62,7 +62,7 @@ jobs:
           BRANCH_NAME="develop-$(TZ=Asia/Tokyo date +'%Y%m%d')"
           git checkout "$BRANCH_NAME"
           git rebase origin develop
-          git push -f origin "$BRANCH_NAME"
+          git push "$BRANCH_NAME"
 
       # プルリクエストのbaseブランチを変更する
       - name: Run GitHub API
