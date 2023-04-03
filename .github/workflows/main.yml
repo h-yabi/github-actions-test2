@@ -26,15 +26,28 @@ jobs:
         with:
           ref: develop
 
-      # ブランチを作成・プッシュする
-      - name: Create Branch
-        id: create_branch
+      # ブランチが存在しない場合は作成する
+      - name: Check if branch exists
+        id: branch_exists
         env:
-          TZ: 'Asia/Tokyo'
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          DATE=`date +"%Y%m%d"`
-          BRANCH_NAME="release_$DATE"
+          BRANCH_NAME="release_$(date +'%Y%m%d')"
+          if git ls-remote --heads origin "$BRANCH_NAME" | grep -q "$BRANCH_NAME"; then
+            echo "Branch already exists"
+            echo "::set-output name=branch_name::"
+          else
+            echo "Branch does not exist"
+            echo "::set-output name=branch_name::$BRANCH_NAME"
+          fi
+
+      - name: Create Branch
+        id: create_branch
+        if: steps.branch_exists.outputs.branch_name != ''
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH_NAME="${{ steps.branch_exists.outputs.branch_name }}"
           git checkout -b "$BRANCH_NAME"
           git push origin "$BRANCH_NAME"
-          echo ::set-output name=branch_name::$BRANCH_NAME
+          echo "::set-output name=branch_name::$BRANCH_NAME"
