@@ -5,18 +5,18 @@ on:
     branches: [develop]
 
 jobs:
-  create-branch:
+  merge-dependabot-PR:
     permissions:
       actions: write
       checks: write
       contents: write
-      deployments: write
-      issues: write
-      packages: write
+      # deployments: write
+      # issues: write
+      # packages: write
       pull-requests: write
-      repository-projects: write
-      security-events: write
-      statuses: write
+      # repository-projects: write
+      # security-events: write
+      # statuses: write
     runs-on: ubuntu-latest
 
     steps:
@@ -32,7 +32,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          BRANCH_NAME="release_$(date +'%Y%m%d')-$(openssl rand -hex 4)"
+          BRANCH_NAME="dependabot-$(TZ=Asia/Tokyo date +'%Y%m%d-%H%M%S')"
           if git ls-remote --heads origin "$BRANCH_NAME" | grep -q "$BRANCH_NAME"; then
             echo "Branch already exists"
             echo "::set-output name=branch_name::"
@@ -55,20 +55,17 @@ jobs:
       # プルリクエストのbaseブランチを変更する
       - name: Run GitHub API
         run: |
+          BRANCH_NAME="${{ steps.branch_exists.outputs.branch_name }}"
           curl -X PATCH \
                 -H "Accept: application/vnd.github+json" \
                 -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
                 https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }} \
                 -d "{ \"base\": \"$BRANCH_NAME\" }" \
 
-  # merge:
-  #   name: merge
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Run GitHub API
-  #       run: |
-  #         curl -X PATCH \
-  #               -H "Accept: application/vnd.github+json" \
-  #               -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-  #               https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }} \
-  #               -d "{ \"base\": \"$message\" }" \
+      # マージする
+      - name: Enable auto-merge for Dependabot PRs
+        # if: ${{ steps.metadata.outputs.update-type == 'version-update:semver-patch' }}
+        run: gh pr merge --auto --merge "$PR_URL"
+        env:
+          PR_URL: ${{github.event.pull_request.html_url}}
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
