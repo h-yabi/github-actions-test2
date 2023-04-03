@@ -35,19 +35,21 @@ jobs:
           BRANCH_NAME="release_$(date +'%Y%m%d')"
           if git ls-remote --heads origin "$BRANCH_NAME" | grep -q "$BRANCH_NAME"; then
             echo "Branch already exists"
-            echo "::set-output name=branch_name::"
+            echo "::set-output name=branch_name::$BRANCH_NAME"
           else
             echo "Branch does not exist"
-            echo "::set-output name=branch_name::$BRANCH_NAME"
+            echo "::set-output name=branch_name::"
           fi
 
-      - name: Create Branch
-        id: create_branch
+      # 最新のdevelopをマージし、ブランチをプッシュする
+      - name: Merge latest develop
         if: steps.branch_exists.outputs.branch_name != ''
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           BRANCH_NAME="${{ steps.branch_exists.outputs.branch_name }}"
-          git checkout -b "$BRANCH_NAME"
+          git fetch
+          git checkout "$BRANCH_NAME"
+          git merge origin/develop --no-edit --allow-unrelated-histories
           git push origin "$BRANCH_NAME"
           echo "::set-output name=branch_name::$BRANCH_NAME"
