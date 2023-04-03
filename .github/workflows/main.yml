@@ -43,12 +43,19 @@ jobs:
           git push origin "$BRANCH_NAME"
           echo ::set-output name=branch_name::$BRANCH_NAME
 
-      # プルリクを作成する
-      - name: 'Pull Request Thank You'
-        uses: GuySWatson/pr-thankyou-action@v1.2
+      # ブランチをプッシュする
+      - name: Push Branch
+        uses: ad-m/github-push-action@master
         with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # BRANCH_NAME: ${{ steps.create_branch.outputs.branch_name }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ steps.create_branch.outputs.branch_name }}
+
+      # プルリクを作成する
+      # - name: 'Pull Request Thank You'
+      #   uses: GuySWatson/pr-thankyou-action@v1.2
+      #   with:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #     BRANCH_NAME: ${{ steps.create_branch.outputs.branch_name }}
 
       # - name: Create Pull Request
       #   env:
