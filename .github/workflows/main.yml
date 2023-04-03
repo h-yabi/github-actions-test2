@@ -59,7 +59,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          BRANCH_NAME="${{ steps.branch_exists.outputs.branch_name }}"
+          BRANCH_NAME="develop-$(TZ=Asia/Tokyo date +'%Y%m%d')"
           git checkout "$BRANCH_NAME"
           git rebase origin develop
           git push -f origin ${{ steps.branch_exists.outputs.branch_name }}
