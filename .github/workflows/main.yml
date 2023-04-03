@@ -32,7 +32,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          BRANCH_NAME="dependabot-$(TZ=Asia/Tokyo date +'%Y%m%d-%H%M%S')"
+          BRANCH_NAME="develop-$(TZ=Asia/Tokyo date +'%Y%m%d-%H%M%S')"
           if git ls-remote --heads origin "$BRANCH_NAME" | grep -q "$BRANCH_NAME"; then
             echo "Branch already exists"
             echo "::set-output name=branch_name::"
