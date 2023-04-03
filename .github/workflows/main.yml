@@ -55,7 +55,7 @@ jobs:
 
       # ブランチが存在する場合は、最新のdevelopブランチをrebaseする
       - name: Rebase latest develop branch
-        if: steps.branch_exists.outputs.branch_name != ''
+        if: steps.branch_exists.outputs.branch_name
         run: |
           git remote update
           git checkout develop
