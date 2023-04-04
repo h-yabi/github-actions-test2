@@ -8,6 +8,7 @@ jobs:
   merge-dependabot-PR:
     if: contains(github.head_ref, 'dependabot')
     permissions:
+      actions: write
       pull-requests: write
     runs-on: ubuntu-latest
 
