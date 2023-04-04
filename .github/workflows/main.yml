@@ -51,7 +51,7 @@ jobs:
       # プルリクエストのbaseブランチを変更する
       - name: Run GitHub API
         run: |
-          BRANCH_NAME="${{ steps.branch_exists.outputs.branch_name }}"
+          BRANCH_NAME="develop-$(TZ=Asia/Tokyo date +'%Y%m%d')"
           curl -X PATCH \
                 -H "Accept: application/vnd.github+json" \
                 -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
