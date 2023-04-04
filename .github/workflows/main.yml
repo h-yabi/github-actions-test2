@@ -53,18 +53,6 @@ jobs:
           git push origin "$BRANCH_NAME"
           echo "::set-output name=branch_name::$BRANCH_NAME"
 
-      # ブランチが存在する場合は、最新のdevelopブランチをrebaseする
-      - name: Rebase latest develop branch
-        if: steps.branch_exists.outputs.branch_name == ''
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          BRANCH_NAME="develop-$(TZ=Asia/Tokyo date +'%Y%m%d')"
-          git checkout "$BRANCH_NAME"
-          git fetch origin develop
-          git rebase origin/develop
-          git push origin "$BRANCH_NAME"
-
       # プルリクエストのbaseブランチを変更する
       - name: Run GitHub API
         run: |
